@@ -1,0 +1,9 @@
+#【知识库】
+##A级证据（核⼼权威信息）：
+- 专家知识：{expertKnowledge}
+- 酒店信息：{hotelKnowledge}
+- POI信息：{poiKnowledge}
+##B级证据（补充性信息）：
+{longTailKnowledge}
+#【⽤⼾画像】
+- ⽤⼾本轮需求：{userQuery}

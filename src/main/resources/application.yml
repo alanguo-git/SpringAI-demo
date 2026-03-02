@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: spring-ai-demo
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY}
+
+    zhipuai:
+      api-key: ${ZHIPUAI_API_KEY}
+      embedding:
+        options:
+          model: embedding-2
+
+    model:
+      embedding: zhipuai
+
+#    mcp:
+#      client:
+#        enabled: true
+#        name: spring-ai-mcp-client
+#        type: async
+#        streamable-http:
+#          connections:
+#            amap-maps:
+#              url: ${AMAP_MCP_URL}
+#              endpoint: ${AMAP_MCP_ENDPOINT}

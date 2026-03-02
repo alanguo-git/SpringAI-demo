@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Agent Chat</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f6f7fb;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --border: #e5e7eb;
+            --user-bubble: #e8f0ff;
+            --bot-bubble: #f3f4f6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .container {
+            width: min(900px, 100%);
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+
+        .chat-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.06);
+            display: flex;
+            flex-direction: column;
+            min-height: 75vh;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .conversation-id {
+            font-size: 12px;
+            color: var(--muted);
+            background: #f9fafb;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 4px 8px;
+            max-width: 60%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--user-bubble);
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: var(--bot-bubble);
+        }
+
+        .composer {
+            border-top: 1px solid var(--border);
+            padding: 14px;
+            display: flex;
+            gap: 10px;
+            background: #fff;
+        }
+
+        .query-input {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .query-input:focus {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .send-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 0 18px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .send-btn:disabled {
+            cursor: not-allowed;
+            background: #93c5fd;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="chat-card">
+        <div class="header">
+            <div class="title">旅行智能助手</div>
+            <div id="conversationId" class="conversation-id"></div>
+        </div>
+
+        <div id="messages" class="messages">
+            <div class="message bot">你好，我是旅行助手。你可以直接问我景点、行程或门票相关问题。</div>
+        </div>
+
+        <div class="composer">
+            <input id="queryInput" class="query-input" placeholder="请输入你的问题..." />
+            <button id="sendBtn" class="send-btn" type="button">发送</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const messagesEl = document.getElementById("messages");
+    const inputEl = document.getElementById("queryInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const conversationEl = document.getElementById("conversationId");
+
+    const conversationId = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : String(Date.now());
+
+    conversationEl.textContent = "会话ID: " + conversationId;
+
+    function appendMessage(role, text) {
+        const node = document.createElement("div");
+        node.className = "message " + role;
+        node.textContent = text;
+        messagesEl.appendChild(node);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        return node;
+    }
+
+    async function sendQuery() {
+        const query = inputEl.value.trim();
+        if (!query) {
+            return;
+        }
+
+        appendMessage("user", query);
+        inputEl.value = "";
+        inputEl.focus();
+
+        sendBtn.disabled = true;
+        inputEl.disabled = true;
+
+        const botNode = appendMessage("bot", "思考中...");
+        botNode.textContent = "";
+
+        try {
+            const url = "/travel/chat?query=" + encodeURIComponent(query) + "&conversationId=" + encodeURIComponent(conversationId);
+            const response = await fetch(url, { method: "GET" });
+            if (!response.ok) {
+                throw new Error("请求失败，状态码: " + response.status);
+            }
+
+            if (!response.body) {
+                throw new Error("浏览器不支持流式读取响应。");
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let fullText = "";
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    break;
+                }
+                fullText += decoder.decode(value, { stream: true });
+                botNode.textContent = fullText;
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+
+            fullText += decoder.decode();
+            botNode.textContent = fullText || "(空响应)";
+        } catch (error) {
+            botNode.textContent = "调用失败：" + (error && error.message ? error.message : "未知错误");
+        } finally {
+            sendBtn.disabled = false;
+            inputEl.disabled = false;
+            inputEl.focus();
+        }
+    }
+
+    sendBtn.addEventListener("click", sendQuery);
+    inputEl.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            sendQuery();
+        }
+    });
+</script>
+</body>
+</html>
