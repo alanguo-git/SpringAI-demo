@@ -27,7 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import spring.ai.example.springaidemo.tools.DateTimeTools;
+import spring.ai.example.springaidemo.util.GsonUtils;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -97,7 +100,6 @@ public class DemoAgentController {
                         MessageChatMemoryAdvisor.builder(chatMemory).build() // chat-memory advisor// RAG advisor
                 )
                 .build();
-        ToolCallback[] toolCallbacks = toolCallbackProvider.getToolCallbacks();
         return chatClient.prompt()
                 .tools(dateTimeTools)
                 .toolCallbacks(toolCallbackProvider)
@@ -124,4 +126,27 @@ public class DemoAgentController {
                 .stream()
                 .content();
     }
+
+
+    @GetMapping("/listAllTools")
+    public Map<String, Object> listAllTools() {
+        ToolCallback[] toolCallbacks = toolCallbackProvider.getToolCallbacks();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalTools", toolCallbacks.length);
+
+        List<Map<String, String>> toolsInfo = Arrays.stream(toolCallbacks)
+                .map(tool -> {
+                    Map<String, String> toolInfo = new HashMap<>();
+                    toolInfo.put("name", tool.getToolDefinition().name());
+                    toolInfo.put("description", tool.getToolDefinition().description());
+                    toolInfo.put("inputTypeSchema", tool.getToolDefinition().inputSchema());
+                    return toolInfo;
+                })
+                .toList();
+
+        result.put("tools", toolsInfo);
+        return result;
+    }
+
 }

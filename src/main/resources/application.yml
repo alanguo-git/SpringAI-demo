@@ -17,13 +17,13 @@ spring:
     model:
       embedding: zhipuai
 
-#    mcp:
-#      client:
-#        enabled: true
-#        name: spring-ai-mcp-client
-#        type: async
-#        streamable-http:
-#          connections:
-#            amap-maps:
-#              url: ${AMAP_MCP_URL}
-#              endpoint: ${AMAP_MCP_ENDPOINT}
+    mcp:
+      client:
+        enabled: true
+        name: spring-ai-mcp-client
+        type: async
+        sse:
+          connections:
+            amap:
+              url: ${AMAP_MCP_URL}
+              sse-endpoint: ${AMAP_MCP_ENDPOINT}

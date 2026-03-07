@@ -87,8 +87,6 @@ public class TravelAgentService {
     }
 
     public Flux<String> chatV2(String query, String conversationId){
-        List<Message> history = chatMemory.get(conversationId);
-        System.out.println(GsonUtils.toJsonString(history));
 
         ChatClient chatClient = ChatClient.builder(chatModel)
                 .defaultAdvisors(
