@@ -29,4 +29,9 @@ public class TravelAgentController {
                                          @RequestParam String conversationId){
         return travelAgentService.chatV2(query, conversationId);
     }
+
+    @GetMapping(value = "/history", produces = "application/json")
+    public List<Message> history(@RequestParam String conversationId){
+        return travelAgentService.history(conversationId);
+    }
 }

@@ -1,6 +1,7 @@
 package spring.ai.example.springaidemo.service;
 
 import jakarta.annotation.PostConstruct;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -25,6 +26,9 @@ import spring.ai.example.springaidemo.util.GsonUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 
 @Service
 public class TravelAgentService {
@@ -110,5 +114,15 @@ public class TravelAgentService {
                 //.templateRenderer(StTemplateRenderer.builder().startDelimiterToken('{').endDelimiterToken('}').build())
                 .stream()
                 .content();
+    }
+
+    public List<Message> history(String conversationId){
+        List<Message> messages = chatMemory.get(conversationId);
+        if (CollectionUtils.isEmpty(messages)) {
+            return new ArrayList<>();
+        }
+        int size = messages.size();
+        int start = Math.max(0, size - 10);
+        return messages.subList(start, size);
     }
 }

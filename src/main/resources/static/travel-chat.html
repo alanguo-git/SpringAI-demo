@@ -169,9 +169,20 @@
     const sendBtn = document.getElementById("sendBtn");
     const conversationEl = document.getElementById("conversationId");
 
-    const conversationId = (window.crypto && window.crypto.randomUUID)
-        ? window.crypto.randomUUID()
-        : String(Date.now());
+    function getConversationId() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("conversationId");
+        return id || (window.crypto && window.crypto.randomUUID
+            ? window.crypto.randomUUID()
+            : String(Date.now()));
+    }
+
+    const conversationId = getConversationId();
+
+    if (!new URLSearchParams(window.location.search).has("conversationId")) {
+        const newUrl = window.location.pathname + "?conversationId=" + conversationId;
+        window.history.replaceState({}, "", newUrl);
+    }
 
     conversationEl.textContent = "会话ID: " + conversationId;
 
@@ -182,6 +193,25 @@
         messagesEl.appendChild(node);
         messagesEl.scrollTop = messagesEl.scrollHeight;
         return node;
+    }
+
+    async function loadHistory() {
+        try {
+            const url = "/travel/history?conversationId=" + encodeURIComponent(conversationId);
+            const response = await fetch(url);
+            if (!response.ok) {
+                return;
+            }
+            const history = await response.json();
+            if (history && history.length > 0) {
+                history.forEach(msg => {
+                    const role = msg.messageType === 'USER' ? 'user' : 'bot';
+                    appendMessage(role, msg.text);
+                });
+            }
+        } catch (error) {
+            console.error("加载历史记录失败:", error);
+        }
     }
 
     async function sendQuery() {
@@ -242,6 +272,8 @@
             sendQuery();
         }
     });
+
+    loadHistory();
 </script>
 </body>
 </html>
